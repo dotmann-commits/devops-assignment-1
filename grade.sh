@@ -52,7 +52,7 @@ done
 info "system-info.sh output"
 if OUTPUT=$(./system-info.sh 2>&1); then
     for keyword in Hostname "Current User" "Operating System" "Kernel Version" Uptime "CPU Information" "Memory Information" "Current Working Directory"; do
-        if echo "${OUTPUT}" | grep -qi "${keyword}"; then
+        if grep -qi "${keyword}" <<< "${OUTPUT}"; then
             pass "system-info.sh output contains '${keyword}'"
         else
             fail "system-info.sh output missing '${keyword}'"
@@ -162,7 +162,8 @@ if [ -d .git ]; then
         fail "no additional branches found (need a merged feature branch)"
     fi
 
-    if git log --merges --oneline 2>/dev/null | grep -q .; then
+    MERGE_COUNT=$(git log --merges --oneline 2>/dev/null | wc -l | tr -d ' ')
+    if [ "${MERGE_COUNT}" -gt 0 ]; then
         pass "merge commit found in history"
     else
         fail "no merge commit found (feature branch should be merged into main)"
