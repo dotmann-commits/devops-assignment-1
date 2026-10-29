@@ -1,10 +1,8 @@
-# Assignment 1 — Linux, Bash & Networking
+# Assignment 1: Linux, Bash and Networking
 
-A small Linux diagnostic toolkit built in Bash. It collects system
-information, checks disk usage against a threshold, and performs basic
-network connectivity checks.
+Three small Bash scripts for checking a Linux machine: system info, disk usage and network connectivity.
 
-## Structure
+## Files
 
 ```
 assignment-1/
@@ -19,31 +17,23 @@ assignment-1/
 
 ## Requirements
 
-- A Linux (or macOS/BSD) environment with `bash`.
-- Standard coreutils (`df`, `uname`, `date`, `hostname`, `whoami`, `uptime`).
-- Optional but recommended for full network-check functionality: `ping`,
-  `getent`/`dscacheutil`/`host`/`dig` (host resolution), `nc` (port check),
-  `ip`/`ifconfig` (interface listing). The scripts fall back gracefully if a
-  given tool isn't present.
+- Linux or macOS with bash
+- Basic commands like df, uname, date, hostname, whoami and uptime
+- For network-check.sh: ping, nc, and one of getent, host or dig. If one of these is missing the script skips that check or uses another tool.
 
-## Installation / Setup
+## Setup
 
 ```bash
-git clone <your-repository-url>
+git clone <repo-url>
 cd assignment-1
 chmod +x *.sh
 ```
-
-No other setup or dependencies are required — everything is plain Bash and
-standard system utilities.
 
 ## Usage
 
 ### system-info.sh
 
-Prints hostname, current user, date/time, OS, kernel version, uptime, CPU
-info, memory info, and current working directory — all read live from the
-system.
+Shows hostname, user, date and time, OS, kernel, uptime, CPU, memory and the current directory.
 
 ```bash
 ./system-info.sh
@@ -55,39 +45,26 @@ system.
 ./disk-check.sh <threshold> [path]
 ```
 
-- `threshold` — required integer from 1–100 (percentage).
-- `path` — optional, defaults to `/`.
-- Prints the current disk usage percentage for `path`.
-- Exit codes:
-  - `0` — usage is below the threshold.
-  - `1` — usage has reached or exceeded the threshold.
-  - `2` — invalid input (missing/non-integer/out-of-range threshold, or a
-    path that doesn't exist).
+The threshold is a number from 1 to 100. The path is optional and defaults to `/`.
 
-Examples:
+Exit codes:
+
+- 0: usage is below the threshold
+- 1: usage is at or above the threshold
+- 2: bad input (missing or invalid threshold, or the path does not exist)
 
 ```bash
-./disk-check.sh 80          # checks / against an 80% threshold
-./disk-check.sh 90 /home    # checks /home against a 90% threshold
+./disk-check.sh 80
+./disk-check.sh 90 /home
 ```
 
 ### network-check.sh
 
 ```bash
-./network-check.sh <hostname-or-ip> [port]
+./network-check.sh <host> [port]
 ```
 
-- Validates the host argument (rejects empty/flag-like/invalid input).
-- Resolves the host and prints the resolved address.
-- Performs a basic `ping` connectivity check.
-- Displays local network interface information.
-- If a `port` is supplied (must be 1–65535), performs a TCP connectivity
-  check against `host:port` using `nc` if available, falling back to Bash's
-  `/dev/tcp` pseudo-device.
-- Invalid input (missing host, malformed host, out-of-range port) returns a
-  non-zero exit code and prints a clear error — it never crashes.
-
-Examples:
+It checks the host is valid, resolves it, pings it once and lists the network interfaces. If you give a port (1 to 65535) it also tries a TCP connection with nc, or with bash's /dev/tcp if nc is not installed. Bad input exits with code 2 and an error message.
 
 ```bash
 ./network-check.sh example.com
@@ -95,52 +72,30 @@ Examples:
 ./network-check.sh 8.8.8.8 53
 ```
 
-## Logging
+## Logs
 
-Every run of every script appends a timestamped entry (e.g.
-`[2026-09-05 12:00:00] OK - ...`) to a log file under `logs/`:
+Each script writes a timestamped line to its own file in `logs/` every time it runs, for example:
 
-- `logs/system-info.log`
-- `logs/disk-check.log`
-- `logs/network-check.log`
+```
+[2026-09-05 12:00:00] OK - ...
+```
 
-`logs/.gitkeep` keeps the (otherwise-empty, generated-content) directory
-tracked in Git; the generated `*.log` files themselves are ignored via
-`.gitignore` so the repository doesn't accumulate machine-specific run
-history.
+The .log files are in .gitignore. `logs/.gitkeep` is there so the folder still exists after cloning.
 
 ## Testing
 
-Run the grading script, which exercises all three tools and validates
-required behaviour:
-
 ```bash
-chmod +x grade.sh *.sh
 ./grade.sh
 ```
 
-`grade.sh` checks: required files exist, scripts pass `bash -n` syntax
-checking, scripts are executable, `system-info.sh` produces all required
-fields, `disk-check.sh` validates its arguments and returns the documented
-exit codes, `network-check.sh` validates its arguments and does not crash
-on bad input, logs are being written with timestamps, and the Git history
-meets the assignment's minimum requirements (5+ commits, a merged feature
-branch).
+This checks the files exist, syntax with `bash -n`, permissions, the output of each script, exit codes for bad input, that logs get written, and the git history (at least 5 commits and a merged branch).
 
-## Assumptions
+## Notes
 
-- "Basic connectivity check" is implemented with `ping -c 1`; environments
-  that block ICMP will see a `WARNING`/non-zero result for that specific
-  check even though the host may otherwise be reachable — this is noted in
-  the script output rather than treated as a hard failure of the whole run.
-- Where a platform-specific tool isn't available (e.g. `free` vs `vm_stat`
-  on macOS, `getent` vs `dscacheutil` for resolution), the script falls back
-  to an equivalent so the toolkit works on both Linux and macOS.
-- No secrets, credentials, or machine-specific hardcoded values are used;
-  all information is gathered live via standard system commands.
+- Some networks block ping. In that case the ping check shows a failure even if the host is up.
+- On macOS a few Linux commands are missing (free, getent), so the scripts use vm_stat and dscacheutil instead.
+- Nothing is hardcoded. All values come from the machine when the script runs.
 
-## Git Workflow
+## Git
 
-This repository was built with a `feature/network-check` branch used to
-develop `network-check.sh` in isolation, later merged into `main` — see
-`git log --graph --oneline --all` for the full history.
+`network-check.sh` was written on the `feature/network-check` branch and then merged into main. Run `git log --graph --oneline --all` to see it.
